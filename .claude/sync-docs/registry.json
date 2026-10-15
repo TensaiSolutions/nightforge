@@ -26,6 +26,13 @@
       "skills/coderabbit-sweep/EVIDENCE.md"
     ]
   },
+  "ga-traffic-report-card": {
+    "doc": "docs/ga-traffic-report-card-template.md",
+    "summary": "The report card: the only input ga-traffic-report takes. Its fields (data folder, artifact, time zone, parked sites, plain and full audit cadence, max audits per run, credit floor), where it lives and why it stays out of a public repo. Drifts whenever the pipeline changes what it reads off the card.",
+    "sources": [
+      "skills/ga-traffic-report/SKILL.md"
+    ]
+  },
   "index-sweep-card": {
     "doc": "docs/index-sweep-card-template.md",
     "summary": "The fleet card: the only input index-sweep takes. One card for every site, in priority order, with its fields (per-site cap, drip days, minimum gap, resend limit, cool-off, campaign name, low-credit floor, run log, and per-site sitemap, OpenSEO project ID and skip patterns), why it stays out of a public repo, and the rule for where a learned gotcha goes. Drifts whenever the pipeline changes what it reads off the card.",

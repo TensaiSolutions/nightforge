@@ -199,6 +199,10 @@ skills/docs-sweep/
 skills/coderabbit-sweep/
   SKILL.md                      the hourly CodeRabbit re-review sweep — find, gate, fire one
   EVIDENCE.md                   dated case law behind each rule — grepped, never read whole
+skills/ga-traffic-report/
+  SKILL.md                      the GA4 traffic report — gather, triage, keep audits on a cadence, publish
+  build.py                      turns report.json into report.html and tracks open actions across runs
+  template.html                 the report page the build fills in
 skills/ci-cost-sweep/
   SKILL.md                      the CI-minutes pipeline — measure, profile, apply levers, prove
   adapters/github-actions.md    billing model, jobs-API measurement, cache inspection
@@ -226,6 +230,7 @@ skills/video-logo-intro/
 docs/project-card-template.md   the per-project input, and how to fill it in
 docs/docs-sweep-card-template.md  the docs-sweep roster card, and how to fill it in
 docs/coderabbit-sweep-card-template.md  the coderabbit-sweep fleet card, and how to fill it in
+docs/ga-traffic-report-card-template.md  the ga-traffic-report card, and how to fill it in
 docs/index-sweep-card-template.md  the index-sweep fleet card, and how to fill it in
 docs/sync-docs.md               how sync-docs works, and how this repo configures it
 docs/logo.png                   the NightForge logo shown at the top of this README
@@ -433,6 +438,22 @@ a per-project card inside the scheduled task.
 ### Install
 
 Comes with the plugin (see [Install](#install)). Then write a project card into an hourly
+scheduled task.
+
+## `ga-traffic-report`
+
+A traffic report across every site you track in OpenSEO. It pulls a week of GA4 data per site
+(channels, sources, top pages, key events, search opportunities), flags what needs you (tracking
+gaps, traffic drops, lost conversions, bot traffic, failing site audits), and republishes one
+artifact page that marks each item NEW or "open since". It also keeps OpenSEO site audits on a
+cadence: a plain crawl every few days and a JavaScript-rendered audit with Lighthouse less often.
+The audits are the only step that spends OpenSEO credits, and the card sets a floor below which
+the costly audits stop.
+
+### Install
+
+Comes with the plugin (see [Install](#install)). Needs the OpenSEO MCP server. Then write a report
+card ([docs/ga-traffic-report-card-template.md](docs/ga-traffic-report-card-template.md)) into a
 scheduled task.
 
 ## `unslop`

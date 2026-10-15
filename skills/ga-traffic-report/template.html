@@ -1,0 +1,274 @@
+<title>GA Traffic Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a control-room sheet. Triage first (what needs the owner), then a one-row-per-site board, then per-site detail. */
+:root {
+  --bg: #f3f5f8;
+  --panel: #ffffff;
+  --ink: #18202c;
+  --muted: #5d6878;
+  --line: #dde2ea;
+  --accent: #2f55c4;
+  --accent-soft: #e6ecfb;
+  --good: #1d7a4c;
+  --good-soft: #e2f3ea;
+  --warn: #9a6200;
+  --warn-soft: #fbf0d9;
+  --bad: #b3261e;
+  --bad-soft: #fbe5e3;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #11151c; --panel: #181e27; --ink: #e6eaf1; --muted: #98a3b4; --line: #2a3340;
+  --accent: #8aa6ff; --accent-soft: #212c48;
+  --good: #5fd39a; --good-soft: #15301f; --warn: #f0b955; --warn-soft: #33280f; --bad: #ff8a80; --bad-soft: #3a1a18;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #11151c; --panel: #181e27; --ink: #e6eaf1; --muted: #98a3b4; --line: #2a3340;
+  --accent: #8aa6ff; --accent-soft: #212c48;
+  --good: #5fd39a; --good-soft: #15301f; --warn: #f0b955; --warn-soft: #33280f; --bad: #ff8a80; --bad-soft: #3a1a18;
+  color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.55 var(--body); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 64px; display: grid; gap: 36px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(28px, 5vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 21px; font-weight: 700; }
+h3 { font-size: 15px; font-weight: 700; font-family: var(--body); }
+.label { font: 500 11px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+section { display: grid; gap: 14px; min-width: 0; }
+.sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+/* header */
+header { display: grid; gap: 10px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 13px; }
+.lede { font-size: 18px; max-width: 62ch; margin: 4px 0 0; }
+.next { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-soft); border-radius: 10px; padding: 12px 14px; max-width: 70ch; }
+.next b { color: var(--accent); white-space: nowrap; }
+
+/* triage */
+.counts { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font: 500 12px/1.6 var(--mono); white-space: nowrap; }
+.p-now { background: var(--bad-soft); color: var(--bad); }
+.p-soon { background: var(--warn-soft); color: var(--warn); }
+.p-fyi { background: var(--accent-soft); color: var(--accent); }
+.p-good { background: var(--good-soft); color: var(--good); }
+.actions { display: grid; gap: 10px; }
+.act { background: var(--panel); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 6px; min-width: 0; }
+.act.now { border-left-color: var(--bad); }
+.act.soon { border-left-color: var(--warn); }
+.act.fyi { border-left-color: var(--accent); }
+.act-top { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.act-title { font-weight: 700; font-size: 16px; }
+.act p { margin: 0; max-width: 75ch; }
+.act .why { color: var(--muted); }
+.act .fix::before { content: "Fix: "; font-weight: 700; }
+.chip { font: 500 12px/1.6 var(--mono); padding: 1px 8px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); }
+.tag-new { font: 700 11px/1.6 var(--mono); color: var(--bad); letter-spacing: .06em; }
+.age { font: 400 12px/1.6 var(--mono); color: var(--muted); }
+.allclear { background: var(--good-soft); color: var(--good); border-radius: 8px; padding: 14px 16px; font-weight: 700; }
+.resolved { color: var(--muted); font-size: 14px; }
+.resolved li { margin: 2px 0; }
+
+/* board */
+.tablebox { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font: 500 11px/1.2 var(--mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.r, th.r { text-align: right; }
+.site-link { font-weight: 700; color: var(--ink); text-decoration: none; }
+.site-link:hover { color: var(--accent); text-decoration: underline; }
+.dom { display: block; color: var(--muted); font: 400 12px var(--mono); }
+.up { color: var(--good); } .down { color: var(--bad); } .flat { color: var(--muted); }
+svg.spark { display: block; }
+.spark-line { fill: none; stroke: var(--accent); stroke-width: 1.5; }
+.spark-area { fill: var(--accent-soft); stroke: none; }
+.spark-dot { fill: var(--accent); }
+
+/* site detail */
+.site { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.site > summary { list-style: none; cursor: pointer; padding: 16px 18px; display: flex; gap: 10px 18px; align-items: baseline; flex-wrap: wrap; }
+.site > summary::-webkit-details-marker { display: none; }
+.site > summary::before { content: "▸"; color: var(--muted); transition: transform .15s; }
+.site[open] > summary::before { transform: rotate(90deg); }
+.site-body { padding: 0 18px 18px; display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.site-body > * { min-width: 0; }
+.full { grid-column: 1 / -1; }
+.kpis { display: flex; gap: 28px; flex-wrap: wrap; }
+.kpi .v { font: 500 24px/1.1 var(--mono); font-variant-numeric: tabular-nums; }
+.kpi .d { font: 400 13px var(--mono); }
+.block { display: grid; gap: 8px; align-content: start; }
+.mini td, .mini th { padding: 6px 8px; }
+.bar { height: 6px; border-radius: 3px; background: var(--accent); opacity: .75; min-width: 2px; }
+.bar.bot { background: var(--warn); }
+.path { font: 400 13px var(--mono); word-break: break-all; }
+ul.standouts { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.empty { color: var(--muted); font-size: 14px; margin: 0; }
+.err { background: var(--bad-soft); color: var(--bad); border-radius: 8px; padding: 10px 12px; font: 400 13px var(--mono); word-break: break-word; }
+
+.foot-grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.foot-grid > * { min-width: 0; }
+.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 560px) { .hide-sm { display: none; } }
+</style>
+
+<div class="wrap" id="app"><p class="empty">Loading report…</p></div>
+
+<script>
+const DATA = /*__REPORT_DATA__*/null;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => n == null ? "–" : Number(n).toLocaleString("en-US");
+const pct = r => r == null ? "–" : (r * 100).toFixed(1) + "%";
+function delta(cur, prev) {
+  if (cur == null || prev == null) return `<span class="flat">–</span>`;
+  if (prev === 0) return cur === 0 ? `<span class="flat">±0</span>` : `<span class="up">new</span>`;
+  const d = (cur - prev) / prev * 100;
+  const cls = Math.abs(d) < 3 ? "flat" : d > 0 ? "up" : "down";
+  return `<span class="${cls}">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
+}
+const pair = v => Array.isArray(v) ? v : [v, null];
+function spark(vals, w = 120, h = 30) {
+  if (!vals || vals.length < 2) return `<span class="flat">–</span>`;
+  const max = Math.max(...vals, 1), step = w / (vals.length - 1);
+  const pts = vals.map((v, i) => [i * step, h - 3 - (v / max) * (h - 6)]);
+  const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+  const last = pts[pts.length - 1];
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="-2 0 ${w + 4} ${h}" role="img" aria-label="Organic sessions per day, peak ${max}">
+    <path class="spark-area" d="${line} L${w} ${h} L0 ${h} Z"/><path class="spark-line" d="${line}"/>
+    <circle class="spark-dot" cx="${last[0]}" cy="${last[1]}" r="2.5"/></svg>`;
+}
+const PRI = { now: ["Fix now", "p-now"], soon: ["This week", "p-soon"], fyi: ["Good to know", "p-fyi"] };
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+function ageText(a) {
+  if (a.isNew) return `<span class="tag-new">NEW</span>`;
+  if (!a.firstSeen) return "";
+  return `<span class="age">open since ${esc(a.firstSeen)}</span>`;
+}
+
+function render(d) {
+  const app = document.getElementById("app");
+  if (!d) { app.innerHTML = `<p class="err">No report data was injected. Run build.py.</p>`; return; }
+  const acts = d.actions || [];
+  const order = { now: 0, soon: 1, fyi: 2 };
+  acts.sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3));
+  const count = p => acts.filter(a => a.priority === p).length;
+  const sites = d.sites || [];
+  const ok = sites.filter(s => s.status === "ok");
+  const totCur = ok.reduce((t, s) => t + (pair(s.sessions)[0] || 0), 0);
+  const totPrev = ok.reduce((t, s) => t + (pair(s.sessions)[1] || 0), 0);
+  const gen = d.generatedAt ? new Date(d.generatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "–";
+  const w = d.window || {};
+
+  let h = `<header>
+    <span class="label">Google Analytics · ${ok.length} site${ok.length === 1 ? "" : "s"} connected</span>
+    <h1>GA Traffic Report</h1>
+    <div class="meta">
+      <span>This week <b class="num">${esc((w.current || []).join(" → "))}</b></span>
+      <span>vs <span class="num">${esc((w.previous || []).join(" → "))}</span></span>
+      <span>Built ${esc(gen)}</span>
+      <span>All sites: <b class="num">${fmt(totCur)}</b> sessions ${delta(totCur, totPrev)}</span>
+    </div>
+    ${d.headline ? `<p class="lede">${esc(d.headline)}</p>` : ""}
+    ${d.doThisNext ? `<div class="next"><b>Do this next</b><span>${esc(d.doThisNext)}</span></div>` : ""}
+  </header>`;
+
+  // triage
+  h += `<section id="triage"><div class="sec-head"><h2>Needs you</h2><div class="counts">
+      <span class="pill p-now">${count("now")} fix now</span>
+      <span class="pill p-soon">${count("soon")} this week</span>
+      <span class="pill p-fyi">${count("fyi")} good to know</span></div></div>`;
+  const incomplete = (d.errors || []).length > 0 || sites.some(s => s.status !== "ok");
+  if (!acts.length) h += incomplete
+    ? `<div class="err">No actions, but this report is incomplete: some calls or sites failed (see Run problems below). Problems on those sites may be missing.</div>`
+    : `<div class="allclear">Nothing to adjust. Every connected site is tracking and nothing broke.</div>`;
+  else h += `<div class="actions">${acts.map(a => `<article class="act ${esc(a.priority)}">
+      <div class="act-top"><span class="pill ${PRI[a.priority]?.[1] || "p-fyi"}">${PRI[a.priority]?.[0] || esc(a.priority)}</span>
+        <span class="chip">${esc(a.site)}</span>${a.kind ? `<span class="chip">${esc(a.kind)}</span>` : ""}${ageText(a)}</div>
+      <div class="act-title">${esc(a.title)}</div>
+      ${a.why ? `<p class="why">${esc(a.why)}</p>` : ""}
+      ${a.fix ? `<p class="fix">${esc(a.fix)}</p>` : ""}
+      ${a.link ? `<p><a href="${esc(a.link)}" target="_blank" rel="noopener">Open in OpenSEO ↗</a></p>` : ""}
+    </article>`).join("")}</div>`;
+  if ((d.resolved || []).length) h += `<div class="resolved"><span class="label">Cleared since last report</span><ul>${d.resolved.map(r => `<li>✓ ${esc(r.site)}: ${esc(r.title)}</li>`).join("")}</ul></div>`;
+  h += `</section>`;
+
+  // board
+  h += `<section id="board"><div class="sec-head"><h2>All sites</h2><span class="label">sessions = visits</span></div>
+    <div class="tablebox"><table><thead><tr><th>Site</th><th class="r">Sessions</th><th class="r">Change</th>
+    <th class="r hide-sm">Engaged</th><th class="r hide-sm">Key events</th><th class="hide-sm">Organic, 28 days</th><th>Flags</th></tr></thead><tbody>
+    ${sites.map(s => {
+      const [c, p] = pair(s.sessions), [e] = pair(s.engagementRate), [k, kp] = pair(s.keyEvents);
+      const n = acts.filter(a => a.site === s.name);
+      const flag = s.status !== "ok" ? `<span class="pill p-now">error</span>`
+        : n.some(a => a.priority === "now") ? `<span class="pill p-now">fix</span>`
+        : n.length ? `<span class="pill p-soon">${n.length}</span>` : `<span class="pill p-good">ok</span>`;
+      return `<tr><td><a class="site-link" href="#site-${slug(s.name)}">${esc(s.name)}</a><span class="dom">${esc(s.domain)}</span></td>
+        <td class="r num">${fmt(c)}</td><td class="r num">${delta(c, p)}</td><td class="r num hide-sm">${pct(e)}</td>
+        <td class="r num hide-sm">${fmt(k)} ${k != null && kp != null ? delta(k, kp) : ""}</td>
+        <td class="hide-sm">${spark(s.organicDaily)}</td><td>${flag}</td></tr>`;
+    }).join("")}</tbody></table></div></section>`;
+
+  // per-site
+  h += `<section id="sites"><h2>Site by site</h2>${sites.map(siteBlock).join("")}</section>`;
+
+  // footer
+  const nc = d.notConnected || [], errs = d.errors || [];
+  h += `<section class="foot-grid">
+    <div class="block"><h2>Not connected</h2>${nc.length ? `<ul class="plain">${nc.map(n => `<li><b>${esc(n.name)}</b> <span class="dom" style="display:inline">${esc(n.domain || "")}</span>${n.parked ? ` <span class="chip">parked</span>` : ""} · <a href="${esc(n.actionUrl)}" target="_blank" rel="noopener">connect GA4 ↗</a></li>`).join("")}</ul>` : `<p class="empty">Every OpenSEO project has GA4 connected.</p>`}</div>
+    <div class="block"><h2>Run problems</h2>${errs.length ? errs.map(e => `<div class="err"><b>${esc(e.site)}</b> · ${esc(e.call)}<br>${esc(e.message)}</div>`).join("") : `<p class="empty">Every OpenSEO call worked.</p>`}</div>
+  </section>`;
+  app.innerHTML = h;
+}
+
+function siteBlock(s) {
+  const id = "site-" + slug(s.name);
+  if (s.status !== "ok") return `<details class="site" id="${id}" open><summary><h2>${esc(s.name)}</h2><span class="dom">${esc(s.domain)}</span></summary>
+    <div class="site-body"><div class="err full">${esc(s.error || "Unknown error")}</div></div></details>`;
+  const [c, p] = pair(s.sessions), [e, ep] = pair(s.engagementRate), [k, kp] = pair(s.keyEvents);
+  const chans = s.channels || [];
+  const maxC = Math.max(1, ...chans.map(x => pair(x.sessions)[0] || 0));
+  const hl = s.health || {};
+  const audit = hl.audit;
+  return `<details class="site" id="${id}" open><summary><h2>${esc(s.name)}</h2><span class="dom">${esc(s.domain)}</span>
+      ${s.projectUrl ? `<a href="${esc(s.projectUrl)}" target="_blank" rel="noopener" style="font-size:13px">OpenSEO ↗</a>` : ""}</summary>
+    <div class="site-body">
+      <div class="kpis full">
+        <div class="kpi"><div class="label">Sessions</div><div class="v">${fmt(c)}</div><div class="d">${delta(c, p)} <span class="flat">from ${fmt(p)}</span></div></div>
+        <div class="kpi"><div class="label">Engaged visits</div><div class="v">${pct(e)}</div><div class="d"><span class="flat">was ${pct(ep)}</span></div></div>
+        <div class="kpi"><div class="label">Key events</div><div class="v">${fmt(k)}</div><div class="d">${delta(k, kp)}</div></div>
+        <div class="kpi"><div class="label">Organic, 28 days</div><div style="padding-top:6px">${spark(s.organicDaily, 160, 36)}</div></div>
+      </div>
+      ${(s.standouts || []).length ? `<div class="block full"><h3>What stands out</h3><ul class="standouts">${s.standouts.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+      <div class="block"><h3>Channels</h3>${chans.length ? `<div class="tablebox"><table class="mini"><thead><tr><th>Channel</th><th class="r">Now</th><th class="r">Δ</th><th class="r">Eng.</th><th style="width:30%"></th></tr></thead><tbody>
+        ${chans.map(x => { const [a, b] = pair(x.sessions); return `<tr><td>${esc(x.name)}${x.bot ? ` <span class="pill p-soon" title="Sessions jumped 40%+ with engagement under 5%">bot?</span>` : ""}</td>
+          <td class="r num">${fmt(a)}</td><td class="r num">${delta(a, b)}</td><td class="r num">${pct(x.engagementRate)}</td>
+          <td><div class="bar${x.bot ? " bot" : ""}" style="width:${((a || 0) / maxC * 100).toFixed(1)}%"></div></td></tr>`; }).join("")}</tbody></table></div>` : `<p class="empty">No channel data.</p>`}</div>
+      <div class="block"><h3>Top pages</h3>${(s.topPages || []).length ? `<div class="tablebox"><table class="mini"><thead><tr><th>Page</th><th class="r">Views</th><th class="r">Users</th></tr></thead><tbody>
+        ${s.topPages.map(x => `<tr><td class="path">${x.host && x.host !== s.domain ? `<span class="pill p-soon">${esc(x.host)}</span> ` : ""}${esc(x.path)}</td><td class="r num">${fmt(x.views)}</td><td class="r num">${fmt(x.users)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">No page data.</p>`}</div>
+      <div class="block"><h3>Top sources</h3>${(s.sources || []).length ? `<div class="tablebox"><table class="mini"><tbody>
+        ${s.sources.map(x => `<tr><td class="path">${esc(x.name)}</td><td class="r num">${fmt(x.sessions)}</td></tr>`).join("")}</tbody></table></div>` : `<p class="empty">No source data.</p>`}</div>
+      <div class="block"><h3>Key events</h3>${(s.events || []).length ? `<div class="tablebox"><table class="mini"><thead><tr><th>Event</th><th class="r">Now</th><th class="r">Δ</th></tr></thead><tbody>
+        ${s.events.map(x => { const [a, b] = pair(x.count); return `<tr><td class="path">${esc(x.name)}</td><td class="r num">${fmt(a)}</td><td class="r num">${delta(a, b)}</td></tr>`; }).join("")}</tbody></table></div>` : `<p class="empty">No key events recorded this week.</p>`}</div>
+      <div class="block full"><h3>Search wins within reach</h3>${(s.opportunities || []).length ? `<div class="tablebox"><table class="mini"><thead><tr><th>Page</th><th class="r">Rank</th><th class="r">Seen</th><th class="r">Clicks</th><th class="r">CTR</th><th class="hide-sm">Why it matters</th></tr></thead><tbody>
+        ${s.opportunities.map(x => `<tr><td class="path">${esc(x.page)}</td><td class="r num">${x.position != null ? Number(x.position).toFixed(1) : "–"}</td><td class="r num">${fmt(x.impressions)}</td><td class="r num">${fmt(x.clicks)}</td><td class="r num">${pct(x.ctr)}</td><td class="hide-sm">${esc(x.note || "")}</td></tr>`).join("")}</tbody></table></div>`
+        : `<p class="empty">${hl.searchConsole === false ? "Search Console is not connected, so OpenSEO cannot score search opportunities." : "No pages ranking 4–20 with enough views to act on."}</p>`}</div>
+      <div class="block full"><h3>Health checks</h3><ul class="plain">
+        <li>GA setup: ${Array.isArray(hl.gaIssues) ? (hl.gaIssues.length ? hl.gaIssues.map(esc).join("; ") : `<span class="up">no problems found</span>`) : `<span class="flat">not checked</span>`}</li>
+        <li>Site audit: ${audit ? `last run ${esc(audit.date)} · <span class="${audit.critical ? "down" : "up"}">${fmt(audit.critical)} critical</span> · ${fmt(audit.warning)} warnings` : `<span class="flat">never run</span>`}</li>
+        <li>Search Console: ${hl.searchConsole == null ? `<span class="flat">not checked</span>` : hl.searchConsole === false ? `<span class="down">not connected</span>` : `<span class="up">connected</span>`}</li>
+      </ul></div>
+    </div></details>`;
+}
+
+render(DATA);
+</script>
