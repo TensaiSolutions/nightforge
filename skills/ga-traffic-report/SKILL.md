@@ -58,11 +58,16 @@ Date windows (in the card's **Time zone**):
       runLighthouse false, maxPages 5000.
       Exception: on a site whose last plain crawl found more than 1000 pages, a full audit cannot
       cover every page, so only plain audits reset its plain-audit clock.
-   If both are due, run (a) this time; (b) follows on a later run if still due.
+   If both are due, run (a) this time; (b) follows on a later run if still due. But if (a) is
+   blocked by the credit check below, start (b) instead when it is due: a low balance must not
+   leave the plain crawl overdue for good.
    url = the `startUrl` of the site's newest audit (some sites redirect to www), else "https://<domain>/".
    Never change these settings otherwise. Start at most **Max audits per run**, most overdue
-   first; the rest wait for the next run. Call whoami before the first start; if creditsRemaining
-   is under **Credit floor**, start no full audits and add a "now" action saying credits are low.
+   first; the rest wait for the next run. Call whoami right before EACH full-audit start (the
+   balance drops as earlier audits render). If whoami fails or creditsRemaining is under
+   **Credit floor**, start no more full audits this run (plain audits may still start) and add a
+   "now" action saying credits are low or could not be checked. JS-render charges post while an
+   audit runs, so the floor is a soft guard; **Max audits per run** is what bounds one run's spend.
    Do not wait for audits to finish; this run reads the previous audit, and the next run picks up
    the new one. Add an "fyi" action per started audit: id `<site>:audit-started:<auditId>`,
    title says plain or full, why = last audit date -> today, link = the run's `meta.url`.
@@ -143,12 +148,16 @@ Write `report.json` in the **Data folder**, UTF-8, exactly this shape ([current,
     "topPages": [{"host", "path", "views", "users"}],
     "events": [{"name", "count": [cur, prev]}],
     "opportunities": [{"page": "/path", "position", "impressions", "clicks", "ctr", "score", "note"}],
-    "health": {"gaIssues": ["..."], "audit": {"date","critical","warning"} | null, "searchConsole": true|false},
+    "health": {"gaIssues": ["..."] | null, "audit": {"date","critical","warning"} | null, "searchConsole": true|false|null},
     "standouts": ["1-3 plain bullets: biggest real changes and a best guess why"]
   }],
   "notConnected": [{"name", "domain", "actionUrl", "parked": true|false}],
   "errors": [{"site", "call", "message"}]
 }
+
+`health` null means "not checked": set gaIssues null when measurement_health failed, and
+searchConsole null when search_opportunities failed for any reason other than a missing
+connection. `[]` means checked with no problems; false means not connected.
 
 Rates are 0-1 fractions. Order sites by current sessions, highest first. Plain English in every
 string: short sentences, define jargon in a few words. `note` on an opportunity says why it is

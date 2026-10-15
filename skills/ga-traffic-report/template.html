@@ -263,9 +263,9 @@ function siteBlock(s) {
         ${s.opportunities.map(x => `<tr><td class="path">${esc(x.page)}</td><td class="r num">${x.position != null ? Number(x.position).toFixed(1) : "–"}</td><td class="r num">${fmt(x.impressions)}</td><td class="r num">${fmt(x.clicks)}</td><td class="r num">${pct(x.ctr)}</td><td class="hide-sm">${esc(x.note || "")}</td></tr>`).join("")}</tbody></table></div>`
         : `<p class="empty">${hl.searchConsole === false ? "Search Console is not connected, so OpenSEO cannot score search opportunities." : "No pages ranking 4–20 with enough views to act on."}</p>`}</div>
       <div class="block full"><h3>Health checks</h3><ul class="plain">
-        <li>GA setup: ${(hl.gaIssues || []).length ? hl.gaIssues.map(esc).join("; ") : `<span class="up">no problems found</span>`}</li>
+        <li>GA setup: ${Array.isArray(hl.gaIssues) ? (hl.gaIssues.length ? hl.gaIssues.map(esc).join("; ") : `<span class="up">no problems found</span>`) : `<span class="flat">not checked</span>`}</li>
         <li>Site audit: ${audit ? `last run ${esc(audit.date)} · <span class="${audit.critical ? "down" : "up"}">${fmt(audit.critical)} critical</span> · ${fmt(audit.warning)} warnings` : `<span class="flat">never run</span>`}</li>
-        <li>Search Console: ${hl.searchConsole === false ? `<span class="down">not connected</span>` : `<span class="up">connected</span>`}</li>
+        <li>Search Console: ${hl.searchConsole == null ? `<span class="flat">not checked</span>` : hl.searchConsole === false ? `<span class="down">not connected</span>` : `<span class="up">connected</span>`}</li>
       </ul></div>
     </div></details>`;
 }

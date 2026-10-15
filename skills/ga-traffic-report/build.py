@@ -16,7 +16,7 @@ import json
 import os
 import re
 import sys
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 TEMPLATE = Path(__file__).resolve().parent / "template.html"
@@ -77,14 +77,22 @@ def main():
         if not isinstance(data[key], list):
             fail(f"report.json '{key}' must be an array")
     for key in ("notConnected", "errors"):
-        if data.get(key) is not None and not isinstance(data[key], list):
-            fail(f"report.json '{key}' must be an array")
+        if data.get(key) is not None:
+            if not isinstance(data[key], list):
+                fail(f"report.json '{key}' must be an array")
+            if any(not isinstance(x, dict) for x in data[key]):
+                fail(f"report.json '{key}' must hold objects")
     if any(not isinstance(a, dict) for a in data["actions"]):
         fail("report.json 'actions' must hold objects")
     if any(not isinstance(s, dict) for s in data["sites"]):
         fail("report.json 'sites' must hold objects")
 
-    today = date.today().isoformat()
+    # The report's own calendar date, in the card's time zone (generatedAt carries its offset),
+    # not this machine's date, so firstSeen/lastRun match the report.
+    try:
+        today = datetime.fromisoformat(str(data.get("generatedAt", ""))).date().isoformat()
+    except ValueError:
+        today = date.today().isoformat()
     history = {}
     if history_path.exists():
         try:
