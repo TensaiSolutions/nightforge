@@ -321,6 +321,7 @@
         <div class="card reveal"><h3>error-sweep</h3><span class="when">Overnight</span><p>Collects production errors, normalizes them to stable signatures, triages each against the real source, files an issue and opens a fix PR from an isolated worktree. Adapters for Netlify, Supabase, Azure Application Insights and GitHub.</p></div>
         <div class="card reveal"><h3>docs-sweep</h3><span class="when">Weekly</span><p>Runs sync-docs across every local repo that carries its config. Where the docs drifted, it opens a draft PR. Clean repos get one line.</p></div>
         <div class="card reveal"><h3>coderabbit-sweep</h3><span class="when">Hourly</span><p>CodeRabbit's review allowance is shared across all your repos, and PRs that miss it are never retried. This is the retry. Label a PR to put it first in line.</p></div>
+        <div class="card reveal"><h3>ga-traffic-report</h3><span class="when">3x a week</span><p>Pulls a week of GA4 traffic for every site in OpenSEO, flags drops, lost conversions and bot traffic, keeps site audits on a schedule, and republishes one report page.</p></div>
         <div class="card reveal"><h3>onboarding-sweep</h3><span class="when">Hourly</span><p>A bot signs up as a new user and logs what it hit to a Notion board. This sweep turns each finding into a fix PR and tracks it through merge and deploy.</p></div>
       </div>
     </div>
