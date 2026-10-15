@@ -26,6 +26,13 @@
       "skills/coderabbit-sweep/EVIDENCE.md"
     ]
   },
+  "index-sweep-card": {
+    "doc": "docs/index-sweep-card-template.md",
+    "summary": "The fleet card: the only input index-sweep takes. One card for every site, in priority order, with its fields (per-site cap, drip days, minimum gap, resend limit, cool-off, campaign name, low-credit floor, run log, and per-site sitemap, OpenSEO project ID and skip patterns), why it stays out of a public repo, and the rule for where a learned gotcha goes. Drifts whenever the pipeline changes what it reads off the card.",
+    "sources": [
+      "skills/index-sweep/SKILL.md"
+    ]
+  },
   "sync-docs": {
     "doc": "docs/sync-docs.md",
     "summary": "The doc-key mechanism and the shared sync-docs skill: what a doc key is, how to tag a source, how to register a page, what config.json and rules.md hold, what each check reports, how a repo adopts the skill, and how to run it in audit vs fix scope.",

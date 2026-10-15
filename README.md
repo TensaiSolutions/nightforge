@@ -111,6 +111,8 @@ CLIs you have already installed and signed in to, and it uses their credentials:
 | Supabase | `error-sweep` (Supabase adapter) | read-only queries | Reads errors. The adapter forbids `supabase db push` and all DDL. |
 | Your own sites | `error-sweep` (App Insights adapter) | `curl` | Sends `GET` requests to your own host to check that a fix took. |
 | NuGet | `error-sweep` (App Insights adapter) | `curl` | Reads public package version lists from `api.nuget.org`. |
+| OpenSEO | `index-sweep` | OpenSEO MCP | Reads Google Search Console index status for your own sites' pages. Free. |
+| Omega Indexer | `index-sweep` | Omega Indexer MCP | Reads campaign history and credits. Creates indexing campaigns, at 1 credit per link. |
 | Google Fonts | `tools/coderabbit-sweep` board | the browser | The generated `board.html` loads IBM Plex from `fonts.googleapis.com` when you open it. |
 
 An adapter only runs when a project card names it. A repo with no Netlify card never calls
@@ -201,6 +203,8 @@ skills/ci-cost-sweep/
   SKILL.md                      the CI-minutes pipeline — measure, profile, apply levers, prove
   adapters/github-actions.md    billing model, jobs-API measurement, cache inspection
   adapters/test-runners.md      per-test timings and parallelism, per runner
+skills/index-sweep/
+  SKILL.md                      the weekly indexing sweep: inspect, live-check, send to Omega Indexer
 skills/codebase-cleanup/
   SKILL.md                      the whole-repo audit — research, size, one PR per finding
 skills/sync-docs/
@@ -222,6 +226,7 @@ skills/video-logo-intro/
 docs/project-card-template.md   the per-project input, and how to fill it in
 docs/docs-sweep-card-template.md  the docs-sweep roster card, and how to fill it in
 docs/coderabbit-sweep-card-template.md  the coderabbit-sweep fleet card, and how to fill it in
+docs/index-sweep-card-template.md  the index-sweep fleet card, and how to fill it in
 docs/sync-docs.md               how sync-docs works, and how this repo configures it
 docs/logo.png                   the NightForge logo shown at the top of this README
 docs/index.html                 the marketing page, served by GitHub Pages from docs/
