@@ -187,7 +187,10 @@ function render(d) {
       <span class="pill p-now">${count("now")} fix now</span>
       <span class="pill p-soon">${count("soon")} this week</span>
       <span class="pill p-fyi">${count("fyi")} good to know</span></div></div>`;
-  if (!acts.length) h += `<div class="allclear">Nothing to adjust. Every connected site is tracking and nothing broke.</div>`;
+  const incomplete = (d.errors || []).length > 0 || sites.some(s => s.status !== "ok");
+  if (!acts.length) h += incomplete
+    ? `<div class="err">No actions, but this report is incomplete: some calls or sites failed (see Run problems below). Problems on those sites may be missing.</div>`
+    : `<div class="allclear">Nothing to adjust. Every connected site is tracking and nothing broke.</div>`;
   else h += `<div class="actions">${acts.map(a => `<article class="act ${esc(a.priority)}">
       <div class="act-top"><span class="pill ${PRI[a.priority]?.[1] || "p-fyi"}">${PRI[a.priority]?.[0] || esc(a.priority)}</span>
         <span class="chip">${esc(a.site)}</span>${a.kind ? `<span class="chip">${esc(a.kind)}</span>` : ""}${ageText(a)}</div>

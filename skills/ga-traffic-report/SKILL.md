@@ -28,7 +28,9 @@ select:mcp__openseo__list_projects,mcp__openseo__get_google_analytics_traffic_ac
 Date windows (in the card's **Time zone**):
 - Current = last 7 complete days, ending yesterday. Previous = the 7 days before that.
 
-1. list_projects. For EVERY project call traffic_acquisition (channel_group, comparePreviousPeriod true).
+1. list_projects. For EVERY project call traffic_acquisition (channel_group, current window,
+   comparePreviousPeriod true). Always pass the window's startDate and endDate: with no dates
+   OpenSEO reports the last 28 days, which the page would mislabel as one week.
    Error code `ga4_not_connected` = put it in `notConnected` with its actionUrl, not an error.
 2. For each connected site, call (in parallel where you can):
    - traffic_acquisition, source_medium, current window, limit 5.
@@ -36,7 +38,9 @@ Date windows (in the card's **Time zone**):
    - organic_overview over the last 28 days ending yesterday, trend daily (sparkline only).
    - key_events, breakdown event, channel "all", current window, comparePreviousPeriod true.
    - measurement_health (GA setup problems).
-   - search_opportunities, default 28-day window, limit 5. If it errors because Search Console
+   - search_opportunities, default 28-day window, limit 100. OpenSEO sorts by its own score and
+     then cuts at the limit, so a small limit can hide the high-impression pages Step 2 picks.
+     If it errors because Search Console
      is not connected, set health.searchConsole=false; that is not a run error.
    - list_site_audits; if one exists, get_audit_issues severity critical and severity warning,
      limit 1 each, just to read the counts from `summary`.
@@ -153,13 +157,18 @@ worth it in under 12 words.
 ## Step 4 - build and publish
 
 1. Run: python "<skill folder>/build.py" "<Data folder>"
-   Non-zero exit = stop, report the exact error, do not publish.
+   Non-zero exit = stop, report the exact error, do not publish. The build writes
+   `history.pending.json`, not `history.json`, so a run that never publishes leaves the
+   NEW / "open since" memory untouched.
 2. Artifact tool, action "read", url = the card's **Artifact** (a publish to an unread artifact
    is refused).
 3. Artifact tool publish with that url and file_path `<Data folder>/report.html`.
    Never publish without the url (that makes a duplicate). Do not pass icon or title.
-   Do not edit template.html or build.py unless the build is actually broken; if you do, say
-   what and why, and edit them in a nightforge worktree with a PR, never the installed copy.
+4. Only after the publish succeeds, run: python "<skill folder>/build.py" "<Data folder>" --commit
+   It moves `history.pending.json` over `history.json`. If the publish failed, skip this step.
+
+Do not edit template.html or build.py unless the build is actually broken; if you do, say what
+and why, and edit them in a nightforge worktree with a PR, never the installed copy.
 
 ## Step 5 - reply in 4 lines or fewer
 
