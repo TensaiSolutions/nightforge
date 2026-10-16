@@ -51,14 +51,24 @@ Date windows (in the card's **Time zone**):
    per site per run:
    a. Full audit, due when the newest completed audit with `ranLighthouse: true` finished
       **Full audit every** days ago or more (or there is none): run_site_audit with
-      renderJavaScript true, runLighthouse true, maxPages 1000 (the JS-render cap). This is the
-      costly one: OpenSEO bills JS rendering per page rendered (its estimate: $0.07-$0.39 per 100 pages).
+      renderJavaScript true, runLighthouse true, and maxPages sized to the site (below). This is
+      the costly one: OpenSEO bills JS rendering per page rendered (its estimate: $0.07-$0.39 per
+      100 pages), and it HOLDS credits for the whole maxPages up front, about 3.84 credits per
+      page, until the audit ends. (2026-10-15: a 1,000-page limit held 3,840 credits on a
+      ~200-page site and left too little free for any other full audit that run.)
+      maxPages = the newest completed PLAIN audit's `pagesCrawled` x 1.5, rounded up to a multiple
+      of 10, at least 50 and at most 1000 (the JS-render cap). A plain crawl's 5,000 limit shows a
+      site's real size; a full audit's own limit does not. If that plain crawl stopped at a round
+      limit (`pagesCrawled` is exactly 50, 100, 200, 500, 1000 or 2000) the site may be bigger than
+      it showed, and with no plain audit at all the size is unknown: in both cases run the due
+      plain audit (b) first instead, so the next full audit can be sized. Only when no plain audit
+      is due use 1000 (sites over 1,000 pages always get 1000).
    b. Plain audit, due when the newest completed audit of any kind finished **Plain audit every**
       days ago or more (or there is none): run_site_audit with renderJavaScript false,
       runLighthouse false, maxPages 5000.
       Exception: on a site whose last plain crawl found more than 1000 pages, a full audit cannot
       cover every page, so only plain audits reset its plain-audit clock.
-   If both are due, run (a) this time; (b) follows on a later run if still due. But if (a) is
+   If both are due, run (a) this time (unless the sizing rule above sends it to (b)); (b) follows on a later run if still due. But if (a) is
    blocked by the credit check below, start (b) instead when it is due: a low balance must not
    leave the plain crawl overdue for good.
    url = the `startUrl` of the site's newest audit (some sites redirect to www), else "https://<domain>/".

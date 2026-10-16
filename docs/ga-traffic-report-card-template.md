@@ -39,7 +39,7 @@ file does not exist, stop and report exactly that — do not improvise a report.
 | **Time zone** | `<IANA zone of the GA4 properties, e.g. America/New_York>` |
 | **Parked sites** | `<site>`, `<site>` — untagged on purpose; never raise tagging for them |
 | **Plain audit every** | **<n>** days (crawl only, up to 5,000 pages) |
-| **Full audit every** | **<n>** days (JS rendering + Lighthouse, up to 1,000 pages; costs credits) |
+| **Full audit every** | **<n>** days (JS rendering + Lighthouse, page limit sized to the site, up to 1,000; costs credits) |
 | **Max audits per run** | **<n>** |
 | **Credit floor** | **<n>** — below this, no full audits start |
 ```
@@ -51,6 +51,8 @@ file does not exist, stop and report exactly that — do not improvise a report.
 - **Artifact** — the run reads it, then republishes `report.html` to it. A run with no URL would
   create a second artifact, so the field is required.
 - **Plain / Full audit every** — a full audit also counts as a plain one, except on sites over
-  1,000 pages, which a full audit cannot cover. At most one audit starts per site per run.
+  1,000 pages, which a full audit cannot cover. At most one audit starts per site per run. A full
+  audit's page limit is about 1.5x the site's last plain crawl, because OpenSEO holds credits for
+  the whole limit until the audit ends.
 - **Credit floor** — checked with `whoami` before any full audit starts. Each run reports the
   credits it used.
