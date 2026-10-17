@@ -437,12 +437,12 @@ another open PR overlap it? for a bug fix, does the bug even reproduce without t
 main in, runs a code review, verifies every finding against the code, fixes what holds up, and
 validates. Then it hands you one fixed-shape write-up — what it does, still needed, findings fixed
 and dropped, tests, your call, recommendation — and waits. You answer merge, close, or change.
-User-invokable: `/pr-sweep`.
+User-invokable: `/nightforge:pr-sweep`.
 
 While you read one write-up, background agents prep the rest of the queue in their own worktrees,
-so the next PR is ready the moment you answer (`/pr-sweep serial` turns that off). It never merges
-or closes on its own, never merges until every check on the head is green, and never rebases a PR
-branch.
+so the next PR is ready the moment you answer (`/nightforge:pr-sweep serial` turns that off). It
+never merges or closes on its own, never merges until every check on the head is green, and never
+rebases a PR branch.
 
 The rule it exists to enforce: **an old PR is a claim about an old main.** In its first run, three of
 eight PRs turned out to be half-done by main, overlapping another PR, or fixing a bug that no longer

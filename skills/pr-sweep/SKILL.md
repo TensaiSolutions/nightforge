@@ -39,10 +39,12 @@ it whole.
 
 ## Step 0 — Inventory
 
-1. List open PRs, drafts included. Record number, title, base, head SHA, created date, changed
-   files, and `mergeable_state`.
-2. **Mark every draft ready for review** (the owner asked for a review; drafts don't get one from
-   most bots). Subscribe to activity on every PR so CI and review events wake you.
+1. List open PRs, drafts included, and fix **the queue**: every open PR, or only the numbers the
+   owner passed. Record number, title, base, head repo and branch, head SHA, created date, changed
+   files, and `mergeable_state`. Nothing outside the queue is touched for the rest of the sweep.
+2. **Mark every draft in the queue ready for review** (the owner asked for a review; drafts don't
+   get one from most bots). Subscribe to activity on every queued PR so CI and review events wake
+   you.
 3. Fetch `main`. For each PR, list the commits merged to main since the PR's base that touch the
    same files. That list is the input to Step 2.
 4. Install dependencies once in the main checkout. Worktrees link to its `node_modules` (or
@@ -51,15 +53,29 @@ it whole.
 ## Step 1 — Parallel prep (skip with `serial`)
 
 Present the first PR yourself (Steps 2–6). Meanwhile, start **one background agent per remaining
-PR**, each in its own worktree (`git worktree add <dir> origin/<branch> -b pr-<n>`), never touching
-the main checkout. Each agent runs Steps 2–5 for its PR, pushes its fixes, removes its worktree, and
-reports back a summary in the Step 6 shape.
+PR**, each in its own worktree, never touching the main checkout:
+
+```bash
+git fetch origin "pull/<n>/head:refs/sweep/pr-<n>"      # the PR's real head, fork or not
+test "$(git rev-parse refs/sweep/pr-<n>)" = "<head SHA from Step 0>"   # else: stop, report it
+git worktree add <dir> -b sweep-pr-<n> refs/sweep/pr-<n>
+```
+
+Never assume the head is `origin/<branch>`: a fork PR's branch is not on `origin`, and a branch of
+the same name there is a different branch. A head that cannot be fetched, or whose SHA does not
+match, is unknown — report it, do not prep it. For a fork PR, push fixes only if the PR allows
+maintainer edits; otherwise put the patch in the write-up.
+
+Each agent runs Steps 2–5 for its PR, pushes its fixes to the PR's head branch, then cleans up so a
+later sweep of the same PR starts fresh: `git worktree remove <dir>`, `git branch -D sweep-pr-<n>`,
+`git update-ref -d refs/sweep/pr-<n>`. It reports back a summary in the Step 6 shape.
 
 Hold each report until that PR's turn. Two consequences to handle:
 
-- **A prepped PR goes stale when an earlier one merges.** Before presenting it, re-check its
-  merge state against current main (`git merge-tree --write-tree origin/main origin/<branch>`). If
-  it now conflicts, merge main in again and re-validate.
+- **A prepped PR goes stale when an earlier one merges.** A clean `git merge-tree` only means no
+  textual conflict — the earlier merge can still break this PR's tests. So whenever main has moved
+  since a PR was prepped, merge current main into it again and re-run Step 5's validation (and
+  Step 4 on any file both PRs touched) before presenting it. Present it on the new head's CI.
 - **Agents running tests in parallel load the machine.** A timeout in a test the PR does not touch
   is load until a solo rerun says otherwise. Rerun it alone before calling it a failure.
 
@@ -73,9 +89,11 @@ Old PRs are often half-done by main already. Answer, with evidence:
 - **Does another open PR overlap it?** Compare changed files and intent across the whole queue,
   **before** asking the owner about either one. Two PRs solving the same screen two ways is a choice
   for the owner, not two merges.
-- **For a bug fix, reproduce the bug without the fix.** A fix that "works" against a bug that does
-  not reproduce on current main is obsolete, however tidy it looks. Show both arms: with and
-  without the change.
+- **For a bug fix, reproduce the bug without the fix.** Show both arms: with and without the
+  change. A failure to reproduce is **inconclusive** on its own — the bug may be timing-, data- or
+  environment-dependent. Recommend closing only when you can also point to what on main removed the
+  failure path (a commit, a mechanism); otherwise report the reproduction as inconclusive and keep
+  the fix in play.
 
 A PR that is not needed gets no fixes and no push. Its write-up recommends closing, with the
 evidence.
