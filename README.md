@@ -211,6 +211,9 @@ skills/index-sweep/
   SKILL.md                      the weekly indexing sweep: inspect, live-check, send to Omega Indexer
 skills/codebase-cleanup/
   SKILL.md                      the whole-repo audit — research, size, one PR per finding
+skills/pr-sweep/
+  SKILL.md                      the open-PR walk — still-needed check, review, fix, owner decides, merge when green
+  EVIDENCE.md                   dated case law behind each rule — grepped, never read whole
 skills/sync-docs/
   SKILL.md                      the docs-drift audit — one engine, a config per repo
 skills/onboarding-sweep/
@@ -425,6 +428,29 @@ before fixing it — a finding that turns out wrong is recorded as rejected, not
 
 Comes with the plugin (see [Install](#install)). Defaults (labels, title prefix, branch prefix)
 sit in the config table at the top of the skill.
+
+## `pr-sweep`
+
+Walks a repo's open PRs with you, one at a time, until each is merged or closed. For every PR it marks
+drafts ready, checks the PR is still needed against current main (did main already do this? does
+another open PR overlap it? for a bug fix, does the bug even reproduce without the fix?), merges
+main in, runs a code review, verifies every finding against the code, fixes what holds up, and
+validates. Then it hands you one fixed-shape write-up — what it does, still needed, findings fixed
+and dropped, tests, your call, recommendation — and waits. You answer merge, close, or change.
+User-invokable: `/pr-sweep`.
+
+While you read one write-up, background agents prep the rest of the queue in their own worktrees,
+so the next PR is ready the moment you answer (`/pr-sweep serial` turns that off). It never merges
+or closes on its own, never merges until every check on the head is green, and never rebases a PR
+branch.
+
+The rule it exists to enforce: **an old PR is a claim about an old main.** In its first run, three of
+eight PRs turned out to be half-done by main, overlapping another PR, or fixing a bug that no longer
+reproduced, and a fourth would have broken deploy with a migration version main had since taken.
+
+### Install
+
+Comes with the plugin (see [Install](#install)). No card — the repo you run it in is the input.
 
 ## `onboarding-sweep`
 

@@ -331,6 +331,7 @@
       <p class="group-label">On demand</p>
       <div class="grid">
         <div class="card reveal"><h3>codebase-cleanup</h3><span class="when">/codebase-cleanup</span><p>Reads the whole repo, logs every finding with <code>path:line</code> evidence and a size, then ships one branch and one PR per small fix. Bigger findings become issues.</p></div>
+        <div class="card reveal"><h3>pr-sweep</h3><span class="when">/pr-sweep</span><p>Walks your open PRs one at a time: checks each is still needed, merges main in, reviews and fixes it, then waits for your merge-or-close call. Merges only when green.</p></div>
         <div class="card reveal"><h3>ci-cost-sweep</h3><span class="when">/ci-cost-sweep</span><p>Measures where your CI minutes actually go, down to each cache, then cuts them without cutting coverage. Run it with <code>fix</code> to get a PR.</p></div>
         <div class="card reveal"><h3>sync-docs</h3><span class="when">/sync-docs</span><p>Links source files to the doc pages that describe them, and flags pages whose sources changed, orphaned pages and lists that no longer match disk.</p></div>
       </div>
