@@ -1,6 +1,6 @@
 ---
 name: pr-sweep
-description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against current main, merge main in, run a code review and verify every finding, fix what holds up, validate, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, or change). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
+description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against current main, merge main in, run a code review and verify every finding, fix what holds up, validate, run the repo's verification skill on the fix in the real app, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, or change). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
 user-invocable: true
 argument-hint: "[serial] [oldest|newest] [PR numbers to limit to]"
 ---
@@ -138,6 +138,30 @@ changed and why, and push to the PR branch.
 On a bot thread you fixed: reply with the commit and resolve it. On one you are not fixing: reply
 with the path you traced and why the fix isn't worth its code, and leave it open for the owner.
 
+### 5b — Verify it works (run the repo's verification skill)
+
+Green tests say the code agrees with itself, not that the change works. Before the write-up, drive
+the PR's head (fixes included) through the real app:
+
+1. **Find the repo's verification skill**: a `verify*` skill under `.claude/skills/` or
+   `.cursor/skills/`, or one the CLAUDE.md names. Use it as written: its launch, doctor, drive and
+   cleanup. Run it in its own worktree on the PR's head so the server's SHA is the one you validated.
+   No skill: launch the app the way the repo's docs say and drive it with Playwright yourself.
+2. **Check the PR's own claim, not just the stock drive.** A stock drive that passes without touching
+   the changed screen proves nothing about this PR. Add a throwaway check for what the PR says
+   changed, plus the side effect it claims (a write, or deliberately none). For a bug fix, drive
+   both arms (Step 2).
+3. **Never point it at production.** Writes go only to a disposable local backend. Without one,
+   verify read-only surfaces only, and say so.
+4. **Work around the environment, never the skill.** A browser-version mismatch or a missing binary
+   gets an uncommitted edit in the throwaway worktree. Never commit a change to the skill for it.
+5. **When a surface can't be driven here** (no Docker for the local stack, a blocked host), use the
+   evidence CI already captured at that commit (e2e result, screenshot gallery). When that's out of
+   reach too, the surface is **unverified**: name it in the write-up rather than letting green tests
+   stand in for it.
+
+Keep the screenshots and transcript where the owner can open them, and link them in the write-up.
+
 ## Step 6 — The write-up (same shape every time)
 
 ```
@@ -149,6 +173,7 @@ Merge with main: <clean / conflicts and how resolved / renumbered migration>
 Review findings fixed (<commit>): <bullets>
 Dropped: <bullets, one-line reason each>
 Tests: <what ran locally, CI status on the new head, preview link if any>
+Verified: <what was driven in the real app and what it showed; what could not be driven, and why>
 Your call: <product decisions, overlaps with other PRs, deploy-order warnings>
 My recommendation: <merge / close / change X>
 

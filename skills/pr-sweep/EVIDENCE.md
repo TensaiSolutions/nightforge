@@ -65,3 +65,12 @@ read the first write-up; every later PR was presented minutes after the previous
 after a fresh 10–15 minute analysis. Costs seen: two prepped PRs needed a fresh merge-tree check after
 earlier merges (both still clean), and a db-state test timed out under the combined load and passed
 alone.
+
+**Verification run on a merged fix (Step 5b).** The default-quest fix was driven with the repo's
+own verify skill after it merged. Its stock Help drive passed, but it checked only a sentence the PR
+never touched. A throwaway check for the PR's claim (the new quest is on the page, listed first in
+the starter set, no writes) was what actually verified it. Two environment gaps: the container's
+Chromium was older than the Playwright pin, fixed with an uncommitted `executablePath` edit in the
+throwaway worktree. With no Docker daemon there was no local backend for the signed-in quest board,
+and the CI screenshot host was blocked. So the signed-in half was reported as unverified here and
+covered by the database suite and CI's e2e run, not by green unit tests.
