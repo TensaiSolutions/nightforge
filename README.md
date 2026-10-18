@@ -431,13 +431,13 @@ sit in the config table at the top of the skill.
 
 ## `pr-sweep`
 
-Walks a repo's open PRs with you, one at a time, until each is merged or closed. For every PR it marks
+Walks a repo's open PRs with you, one at a time, until each is merged, closed, or held. For every PR it marks
 drafts ready, checks the PR is still needed against current main (did main already do this? does
 another open PR overlap it? for a bug fix, does the bug even reproduce without the fix?), merges
 main in, runs a code review, verifies every finding against the code, fixes what holds up,
 validates, and runs the repo's verification skill to drive the fix through the real app. Then it
 hands you one fixed-shape write-up — what it does, still needed, findings fixed and dropped, tests,
-what was verified (and what couldn't be), your call, recommendation — and waits. You answer merge, close, or change.
+what was verified (and what couldn't be), your call, recommendation — and waits. You answer merge, close, change, or hold. A held PR stays watched and green until you merge it.
 User-invokable: `/nightforge:pr-sweep`.
 
 While you read one write-up, background agents prep the rest of the queue in their own worktrees,

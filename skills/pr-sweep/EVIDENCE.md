@@ -74,3 +74,43 @@ Chromium was older than the Playwright pin, fixed with an uncommitted `executabl
 throwaway worktree. With no Docker daemon there was no local backend for the signed-in quest board,
 and the CI screenshot host was blocked. So the signed-in half was reported as unverified here and
 covered by the database suite and CI's e2e run, not by green unit tests.
+
+## 2026-10-17 — second sweep, `beta`, 13 open PRs (12 merged, 1 held)
+
+**Two holds, and why a held PR stays watched (Step 7, "hold").** The owner said "not now" on one
+PR, swept on, and said "merge" on it hours later; the base had moved, so it was merged in again and
+re-validated before the merge. A second PR, a large feature, was held because the owner would merge
+it from another session. Over the next day it took one automatic and three owner-requested bot
+reviews, four real findings, three fix commits, and a CI run per push. The old Step 7 unsubscribed from every finished
+PR, which would have dropped all of that. Neither PR was merged by the sweep without a fresh "merge".
+
+**Full bot reviews kept finding real bugs after our review passed (Step 4).** On the held feature
+PR, an incremental bot review found two real issues: the draft page showed a generated image on a
+site whose address was not https, while the posts would carry none; and an unranged read could
+silently stop at the API's row cap. Then the owner asked for full reviews. The first found that a
+settings save rewrote every queued post even when only branding changed, undoing an operator's
+"retry as text only". The second found that a failure in the optional image step aborted the
+update that removes deleted media from queued posts, so a deleted screenshot could still publish.
+Two of the four sat in code our own fix rounds had added. The third full review came back clean.
+
+**Fixes got tests that fail without them (Step 5).** A narrow-width header scrolled the page
+sideways only between 561 and 577 pixels; a browser test at those widths now fails without the
+fix. A Back-button fix got a real browser test, and writing it taught its own lesson: Chrome drops
+the history entry for a navigation that has no user gesture, so the first version of the test
+landed on about:blank. It now holds the response until the page is clicked. A shared https check
+that two code paths now call got unit tests for https, http, and a trailing slash.
+
+**Direction lives in docs, not commits (Step 2).** The repo's CLAUDE.md recorded a change of target
+user two days before the sweep, with rules for product copy. No commit to the PRs' files reflected
+it, so the base-commit list could not surface it; each PR's user-facing copy was read against the
+current rules directly.
+
+**Migration history out of reach (Step 3).** The held PR adds two migrations, and the repo applies
+migrations to production when a PR merges. The connected database tool was scoped to a different
+project, so the migration history could not be read. The write-up asked the owner whether the first
+migration had already been run by hand, rather than assuming it had not.
+
+**Bot noise (Noise to ignore).** Every fix pushed drew a review-bot edit marking its thread
+"Addressed in commit …" and an autofix bot's new thread saying the finding was already handled.
+Each autofix thread was resolved without a reply. The account-wide review allowance ran out after
+each full review, and its "review limit reached" notice needed no action.

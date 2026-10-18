@@ -1,6 +1,6 @@
 ---
 name: pr-sweep
-description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against its base branch, merge that base in, run a code review and verify every finding, fix what holds up, validate, run the repo's verification skill on the fix in the real app, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, or change). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
+description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against its base branch, merge that base in, run a code review and verify every finding, fix what holds up, validate, run the repo's verification skill on the fix in the real app, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, change, or hold). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
 user-invocable: true
 argument-hint: "[serial] [oldest|newest] [PR numbers to limit to]"
 ---
@@ -93,6 +93,10 @@ Old PRs are often half-done by their base (usually `main`) already. Answer, with
 - **Did the base already do this?** Compare the PR's intent with the commits from Step 0.3. When
   the base did part of it, say which part, and what the PR still adds.
 - **Did the base make it moot or wrong?** A refactor, a removal, or a redesign the PR predates.
+- **Does it still fit the repo's direction?** Read the PR against the repo's CLAUDE.md as it is
+  today, not as it was when the PR was opened. A change of audience, voice, or product rule lives in
+  a doc, not in commits to the PR's files, so the Step 0.3 list never shows it. A PR that fights the
+  current direction is the owner's call; copy that only needs the current words is a fix.
 - **Does another open PR overlap it?** Compare changed files and intent across the whole queue,
   **before** asking the owner about either one. Two PRs solving the same screen two ways is a choice
   for the owner, not two merges.
@@ -114,10 +118,14 @@ still adds. Regenerate lockfiles and generated files with the repo's tooling, ne
 
 Then check the things a clean textual merge does not catch:
 
-- **Migration / schema versions** — a migration timestamp or version that the base has since used is a
+- **Migration / schema versions**: a migration timestamp or version that the base has since used is a
   collision that breaks deploy. Renumber it after the base's newest.
-- **Generated types, registries, sitemaps, route tables** — anything the repo keeps in sync by hand
+- **Generated types, registries, sitemaps, route tables**: anything the repo keeps in sync by hand
   (its CLAUDE.md usually lists them).
+- **Migration already applied out of band**: read the target database's migration history when
+  you can. A migration someone already ran by hand fails when the merge applies it again. When you
+  cannot read that history (no access, a database tool scoped to another project), say so in the
+  write-up as an open question. Never assume the migration is unapplied.
 
 ## Step 4 — Review, then verify every finding
 
@@ -134,12 +142,18 @@ For each finding, decide and record one of:
   the write-up, never silently into the diff.
 
 Rate-limited review bots (CodeRabbit's account-wide allowance is about one review an hour) are a
-second opinion, not the gate. Run your own review first; spend a bot review when the owner asks.
+second opinion, not the gate. Run your own review first. On a small PR, spend a bot review when
+the owner asks. On a large PR, request a full bot review after your last fix round whether or not
+the owner asks: fix rounds introduce bugs of their own, and a fresh full read finds them where an
+incremental one does not. Repeat after any fix it leads to, until a full review comes back with
+nothing that holds up. When the allowance is spent, say the review is pending in the write-up.
 
 ## Step 5 — Fix and validate
 
-Keep each fix minimal: what the finding needs, no more. Then run what a contributor would run
-locally — typecheck, unit tests, and the database/migration suite whenever schema or test-db files
+Keep each fix minimal: what the finding needs, no more. A fix for a bug ships with a test that
+fails without it, at the level the bug lives (a unit test for logic, a browser test for layout or
+navigation), unless no such test is possible here; then say why in the write-up. Then run what a
+contributor would run locally: typecheck, unit tests, and the database/migration suite whenever schema or test-db files
 changed. Re-read your own diff adversarially before pushing. Commit with a message that says what
 changed and why, and push it to the PR's head branch **by name**:
 `git push <head remote> HEAD:refs/heads/<head branch>`, using the head repo and branch recorded in
@@ -190,9 +204,9 @@ Dropped: <bullets, one-line reason each>
 Tests: <what ran locally, CI status on the new head, preview link if any>
 Verified: <what was driven in the real app and what it showed; what could not be driven, and why>
 Your call: <product decisions, overlaps with other PRs, deploy-order warnings>
-My recommendation: <merge / close / change X>
+My recommendation: <merge / close / change X / hold>
 
-Merge, close, or change something first?
+Merge, close, hold, or change something first?
 ```
 
 Lead with the thing the owner must decide. Deploy-order warnings — a migration that must be applied
@@ -200,27 +214,37 @@ before or with the deploy, a feature flag to set — are never buried in a bulle
 
 ## Step 7 — Act on the decision, then the next PR
 
-- **Merge** — wait until every check on the current head is green, then squash-merge with
+- **Merge**: wait until every check on the current head is green, then squash-merge with
   `expectedHeadSha` set to the head you validated, titled `<title> (#N)` (match the repo's
   convention if it differs). A new push after the owner said "merge" resets the wait.
-- **Close** — one comment on the PR saying why (superseded by #M, obsolete because …), then close.
-- **Change** — make the change, re-run Steps 4–5 on what you changed, and present an updated
+- **Close**: one comment on the PR saying why (superseded by #M, obsolete because …), then close.
+- **Change**: make the change, re-run Steps 4–5 on what you changed, and present an updated
   write-up. A redesign the owner asks for is the owner's spec: state your reading of it in one line
   so they can correct it before you build the wrong thing.
-- **Follow-up work the owner asks for** (an issue, a new small PR) — do it, link it, and fold it into
+- **Hold** ("hold it", "not now", "I'll merge it elsewhere"): the PR leaves the presentation queue
+  but stays yours to keep green. Stay subscribed. Keep fixing red CI, merge conflicts, and bot
+  findings as they arrive, with the same verify-then-fix rule, and reply on each thread you fix.
+  Never merge or close a held PR, however green it gets: only a fresh "merge #N" from the owner
+  lifts the hold, and an owner merging it in another session means this session never merges it.
+  When the owner comes back to it, merge the base in again, re-run Steps 4 and 5 on the new head,
+  give a short status, and then act on their call. Present the next PR right away.
+- **Follow-up work the owner asks for** (an issue, a new small PR): do it, link it, and fold it into
   the queue as one more item.
 
-Then unsubscribe from the finished PR and present the next one.
+Then unsubscribe from a merged or closed PR (a held one stays subscribed) and present the next one.
 
 ## Noise to ignore
 
-Deploy-preview bot edits, your own replies echoing back as events, CI results for a head SHA that
+Deploy-preview bot edits, your own replies echoing back as events, a review bot editing its own
+comment to add "Addressed in commit …" or "Confirmed as addressed", CI results for a head SHA that
 is no longer the PR's head, and review-bot "rate limited" or "review paused" notices. None needs
-action or a message to the owner. A cancelled preview build on a commit that only touched non-built
-paths is the repo's build filter working, not a failure.
+action or a message to the owner. An autofix bot's new thread saying a finding is "already handled"
+with nothing left to change needs only a resolve, no reply. A cancelled preview build on a commit
+that only touched non-built paths is the repo's build filter working, not a failure.
 
 ## Done
 
-The queue is empty when every PR from Step 0 (plus anything the owner added) is merged or closed.
-Finish with one table — PR, outcome, follow-ups — and the list of anything the owner still has to do
-outside GitHub (migrations to apply, settings to flip).
+The queue is empty when every PR from Step 0 (plus anything the owner added) is merged, closed, or
+held. Finish with one table (PR, outcome, follow-ups) and the list of anything the owner still has
+to do outside GitHub (migrations to apply, settings to flip). Name each held PR, its CI state, and
+that you are still watching it.
