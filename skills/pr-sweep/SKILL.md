@@ -1,6 +1,6 @@
 ---
 name: pr-sweep
-description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against current main, merge main in, run a code review and verify every finding, fix what holds up, validate, run the repo's verification skill on the fix in the real app, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, or change). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
+description: Walk every open PR in a repo with the owner, one at a time, until the queue is empty. For each PR, mark it ready, check it is still needed against current main, merge the PR's base in, run a code review and verify every finding, fix what holds up, validate, run the repo's verification skill on the fix in the real app, then hand the owner a fixed-shape write-up and act only on their decision (merge when green, close, or change). Preps the rest of the queue in parallel while the owner reads. Use when the user asks to go through, triage, review, clean up, or merge the open PRs.
 user-invocable: true
 argument-hint: "[serial] [oldest|newest] [PR numbers to limit to]"
 ---
@@ -74,9 +74,10 @@ later sweep of the same PR starts fresh: `git worktree remove <dir>`, `git branc
 Hold each report until that PR's turn. Two consequences to handle:
 
 - **A prepped PR goes stale when an earlier one merges.** A clean `git merge-tree` only means no
-  textual conflict — the earlier merge can still break this PR's tests. So whenever main has moved
-  since a PR was prepped, merge current main into it again and re-run Step 5's validation (and
-  Step 4 on any file both PRs touched) before presenting it. Present it on the new head's CI.
+  textual conflict — the earlier merge can still break this PR's tests. So whenever the PR's
+  recorded base has moved since it was prepped, merge that base (`origin/<base>`) into it again
+  and re-run Step 5's validation (and Step 4 on any file both PRs touched) before presenting it.
+  Never merge `main` into a PR that targets another branch. Present it on the new head's CI.
 - **Agents running tests in parallel load the machine.** A timeout in a test the PR does not touch
   is inconclusive, not a failure and not cleared. Rerun it alone, on the PR and on its base: failing
   on the base too means it isn't this PR's; failing only on the PR means it is real. Passing both
