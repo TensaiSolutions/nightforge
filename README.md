@@ -431,7 +431,7 @@ sit in the config table at the top of the skill.
 
 ## `pr-sweep`
 
-Walks a repo's open PRs with you, one at a time, until each is merged or closed. For every PR it marks
+Walks a repo's open PRs with you, one at a time, until each is merged, closed, or held. For every PR it marks
 drafts ready, checks the PR is still needed against current main (did main already do this? does
 another open PR overlap it? for a bug fix, does the bug even reproduce without the fix?), merges
 main in, runs a code review, verifies every finding against the code, fixes what holds up,

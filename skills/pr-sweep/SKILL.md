@@ -142,10 +142,11 @@ For each finding, decide and record one of:
   the write-up, never silently into the diff.
 
 Rate-limited review bots (CodeRabbit's account-wide allowance is about one review an hour) are a
-second opinion, not the gate. Run your own review first; spend a bot review when the owner asks.
-On a large PR, a full bot review after your last fix round is worth its allowance: fix rounds
-introduce bugs of their own, and a fresh full read finds them where an incremental one does not.
-Keep going until a full review comes back with nothing that holds up.
+second opinion, not the gate. Run your own review first. On a small PR, spend a bot review when
+the owner asks. On a large PR, request a full bot review after your last fix round whether or not
+the owner asks: fix rounds introduce bugs of their own, and a fresh full read finds them where an
+incremental one does not. Repeat after any fix it leads to, until a full review comes back with
+nothing that holds up. When the allowance is spent, say the review is pending in the write-up.
 
 ## Step 5 — Fix and validate
 
@@ -225,8 +226,8 @@ before or with the deploy, a feature flag to set — are never buried in a bulle
   findings as they arrive, with the same verify-then-fix rule, and reply on each thread you fix.
   Never merge or close a held PR, however green it gets: only a fresh "merge #N" from the owner
   lifts the hold, and an owner merging it in another session means this session never merges it.
-  When the owner comes back to it, merge the base in again, re-run Step 5 on the new head, give a
-  short status, and then act on their call. Present the next PR right away.
+  When the owner comes back to it, merge the base in again, re-run Steps 4 and 5 on the new head,
+  give a short status, and then act on their call. Present the next PR right away.
 - **Follow-up work the owner asks for** (an issue, a new small PR): do it, link it, and fold it into
   the queue as one more item.
 
