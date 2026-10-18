@@ -27,7 +27,7 @@ it whole.
   check is green** — wait for the slowest job (e2e is usually last), never merge on a partial run.
 - **One PR in front of the owner at a time.** Never present the next PR until they have answered on
   the current one. Prep may run ahead; presentation never does.
-- **Never rewrite history on a PR branch.** Bring main in with a merge commit. No rebase, amend, or
+- **Never rewrite history on a PR branch.** Bring the PR's base in with a merge commit. No rebase, amend, or
   force-push — the author may have the branch checked out.
 - **Never skip, disable, or quarantine a test to get green.** A failure is root-caused or reported.
 - **Every review finding is a claim to verify, not an order.** Yours, a bot's, a human's. Trace it to
@@ -66,7 +66,8 @@ the same name there is a different branch. A head that cannot be fetched, or who
 match, is unknown — report it, do not prep it. For a fork PR, push fixes only if the PR allows
 maintainer edits; otherwise put the patch in the write-up.
 
-Each agent runs Steps 2–5 for its PR, pushes its fixes to the PR's head branch, then cleans up so a
+Each agent runs Steps 2–5 for its PR, pushes its fixes to the PR's head branch by name (Step 5),
+then cleans up so a
 later sweep of the same PR starts fresh: `git worktree remove <dir>`, `git branch -D sweep-pr-<n>`,
 `git update-ref -d refs/sweep/pr-<n>`. It reports back a summary in the Step 6 shape.
 
@@ -77,7 +78,10 @@ Hold each report until that PR's turn. Two consequences to handle:
   since a PR was prepped, merge current main into it again and re-run Step 5's validation (and
   Step 4 on any file both PRs touched) before presenting it. Present it on the new head's CI.
 - **Agents running tests in parallel load the machine.** A timeout in a test the PR does not touch
-  is load until a solo rerun says otherwise. Rerun it alone before calling it a failure.
+  is inconclusive, not a failure and not cleared. Rerun it alone, on the PR and on its base: failing
+  on the base too means it isn't this PR's; failing only on the PR means it is real. Passing both
+  only makes load the likely cause. Report it as a hypothesis, since a solo pass can still hide an
+  intermittent regression.
 
 ## Step 2 — Still needed? (the skeptical pass)
 
@@ -98,9 +102,10 @@ Old PRs are often half-done by main already. Answer, with evidence:
 A PR that is not needed gets no fixes and no push. Its write-up recommends closing, with the
 evidence.
 
-## Step 3 — Bring main in
+## Step 3 — Bring the base in
 
-Merge `origin/main` into the PR branch (merge commit). Resolve conflicts by reading both sides:
+Merge the PR's recorded base (`origin/<base>`, usually `main`) into the PR branch (merge commit).
+Never merge `main` into a PR that targets another branch. Resolve conflicts by reading both sides:
 when main replaced something the PR also changed, take main's version and keep only what the PR
 still adds. Regenerate lockfiles and generated files with the repo's tooling, never by hand.
 
@@ -133,7 +138,10 @@ second opinion, not the gate. Run your own review first; spend a bot review when
 Keep each fix minimal: what the finding needs, no more. Then run what a contributor would run
 locally — typecheck, unit tests, and the database/migration suite whenever schema or test-db files
 changed. Re-read your own diff adversarially before pushing. Commit with a message that says what
-changed and why, and push to the PR branch.
+changed and why, and push it to the PR's head branch **by name**:
+`git push <head remote> HEAD:refs/heads/<head branch>`, using the head repo and branch recorded in
+Step 0. A bare `git push` from a prep worktree pushes `sweep-pr-<n>`, a new branch the PR never
+sees. For a fork, `<head remote>` is the fork's URL, and only when the PR allows maintainer edits.
 
 On a bot thread you fixed: reply with the commit and resolve it. On one you are not fixing: reply
 with the path you traced and why the fix isn't worth its code, and leave it open for the owner.
