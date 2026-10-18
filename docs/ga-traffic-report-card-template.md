@@ -46,8 +46,10 @@ file does not exist, stop and report exactly that — do not improvise a report.
 
 ## Fields
 
-- **Data folder** — the build writes `history.json` here, which is how the page marks an action
-  NEW or "open since". Moving the folder resets that memory.
+- **Data folder** — `history.json` lives here, and it is how the page marks an action NEW or
+  "open since". The build only stages `history.pending.json`; the run moves it over
+  `history.json` (`build.py --commit`) after the publish succeeds, so a run that never publishes
+  leaves that memory untouched. Moving the folder resets it.
 - **Artifact** — the run reads it, then republishes `report.html` to it. A run with no URL would
   create a second artifact, so the field is required.
 - **Plain / Full audit every** — a full audit also counts as a plain one, except on sites over

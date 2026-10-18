@@ -235,6 +235,7 @@ docs/index-sweep-card-template.md  the index-sweep fleet card, and how to fill i
 docs/sync-docs.md               how sync-docs works, and how this repo configures it
 docs/logo.png                   the NightForge logo shown at the top of this README
 docs/index.html                 the marketing page, served by GitHub Pages from docs/
+docs/.nojekyll                  empty marker: GitHub Pages serves docs/ as-is, without Jekyll
 docs/sitemap.xml                lists the Pages site's pages; update it when adding a page
 docs/a0b4cc5a5653b1278fbe1db5a316aaeb.txt  the IndexNow key, verified by the daily job in jfreal/johnf.build
 .claude/sync-docs/              this repo's own sync-docs config and registry
