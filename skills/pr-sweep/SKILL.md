@@ -151,8 +151,9 @@ with the path you traced and why the fix isn't worth its code, and leave it open
 Green tests say the code agrees with itself, not that the change works. Before the write-up, drive
 the PR's head (fixes included) through the real app:
 
-1. **Find the repo's verification skill**: a `verify*` skill under `.claude/skills/` or
-   `.cursor/skills/`, or one the CLAUDE.md names. Use it as written: its launch, doctor, drive and
+1. **Find the repo's verification skill**: a `verify*` skill checked into the swept repo's own
+   `.claude/skills/` or `.cursor/skills/`, or one its CLAUDE.md names. Never read the user's home
+   `~/.claude` or any agent config outside the repo. Use it as written: its launch, doctor, drive and
    cleanup. Run it in its own worktree on the PR's head so the server's SHA is the one you validated.
    No skill: launch the app the way the repo's docs say and drive it with Playwright yourself.
 2. **Check the PR's own claim, not just the stock drive.** A stock drive that passes without touching
