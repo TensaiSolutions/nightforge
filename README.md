@@ -46,6 +46,26 @@ claude plugin marketplace update nightforge
 claude plugin update nightforge@nightforge
 ```
 
+To skip those steps, turn on auto-update. It is off by default for every marketplace except
+Anthropic's, and it is set per marketplace and per machine. Run `/plugin`, open the
+**Marketplaces** tab, select `nightforge`, and pick **Enable auto-update**. Repeat for any other
+marketplace you want kept current. `claude plugin marketplace list` shows the ones you have. See
+[Keep plugins updated](https://code.claude.com/docs/en/plugins/install).
+
+### On claude.ai
+
+Plugins in claude.ai and the Claude desktop app live under **Customize > Plugins**. Add this repo
+with **Add > Add marketplace**, then install `nightforge` from it.
+
+The plugin page's **Update** button stays greyed out until the marketplace has pulled your latest
+push. To pull it, select **Check for updates** on the marketplace. To skip that, turn on **Sync
+automatically**, which is offered for marketplaces you added yourself from github.com. Once the
+marketplace syncs, the plugin updates on your account with nothing to accept. See
+[Manage installed plugins](https://claude.com/docs/plugins/overview).
+
+The plugin has no `version` in `plugin.json` or the marketplace entry, so each commit counts as a
+new version. Adding a `version` would hold everyone on the old copy until that string changes.
+
 ### In another repo, for teammates
 
 A repo can mark the plugin as the one to use, so everyone who works in it gets the same skills.
