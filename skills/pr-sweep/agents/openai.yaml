@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Sweep"
+  short_description: "Review and validate a PR queue with owner decisions"
+  default_prompt: "Use $pr-sweep to review the selected pull requests, verify findings, and present each for my decision."

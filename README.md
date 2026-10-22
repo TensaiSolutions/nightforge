@@ -11,6 +11,30 @@ Agentic "dark factory" tools and skills that I use across my repos.
 Every skill under `skills/` ships as one Claude Code plugin named `nightforge`. Once it is
 installed, the skills show up namespaced: `error-sweep` becomes `/nightforge:error-sweep`.
 
+### Codex (initial support: `pr-sweep`)
+
+The Claude plugin install below is unchanged. For Codex, export the shared skill
+and its host adapter into a self-contained skills folder using Python 3.10+:
+
+```sh
+python3 tools/codex/export_skills.py --skill pr-sweep --dest /path/to/project/.agents/skills
+```
+
+For a personal install, use your Codex user skills directory as `--dest` instead.
+For a packaging check without installing anything, choose a temporary directory.
+The exporter refuses to replace an existing `pr-sweep` folder: review updates in a
+separate destination before replacing a customized installation. Exported skills
+are copies; upstream changes do not update them automatically.
+
+Invoke with `$pr-sweep` and optional `serial`, `oldest`/`newest`, or PR numbers.
+The adapter uses `AGENTS.md`, available Codex reviews and the project's actual
+verification tools (including Xcode/simulators for Apple apps). It preserves the
+owner's merge/close decisions and does not schedule unattended work. Other skills
+have not been adapted by this exporter. See the
+[Codex host mappings](skills/pr-sweep/adapters/codex.md).
+
+Validate the exporter with `python3 -m unittest discover -s tests`.
+
 ### How marketplaces work
 
 Claude Code installs plugins only from a marketplace. You can't point it at a folder and say
@@ -232,6 +256,8 @@ skills/index-sweep/
 skills/codebase-cleanup/
   SKILL.md                      the whole-repo audit — research, size, one PR per finding
 skills/pr-sweep/
+  adapters/codex.md             Codex tool, guidance and verification mappings
+  agents/openai.yaml            Codex display and invocation metadata
   SKILL.md                      the open-PR walk — still-needed check, review, fix, owner decides, merge when green
   EVIDENCE.md                   dated case law behind each rule — grepped, never read whole
 skills/sync-docs/
