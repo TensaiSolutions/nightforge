@@ -85,6 +85,23 @@ Date windows (in the card's **Time zone**):
    (`all:credits:audits`). If run_site_audit errors (for example, not enough credits), add it
    to `errors` and keep going.
 
+5. Audit visits. For each connected site, take the completed or running audits from 1.4's
+   list_site_audits call with `ranLighthouse: true` whose `startedAt` date (in the card's
+   **Time zone**) falls inside the current or previous window. For each one, call
+   traffic_acquisition channel_group for that day alone (startDate = endDate = that date; if
+   `completedAt` is on a later date, end there instead). Then:
+   - dayDirect = Direct sessions on the audit day(s).
+   - baseline = (that window's Direct sessions - dayDirect) / the window's other days, rounded.
+   - auditVisits = max(0, dayDirect - baseline x audit days), at most the audit's `pagesCrawled`
+     plus 10%.
+   Subtract auditVisits from that window's Direct sessions before the bot test in Step 2 and
+   before the headline. Keep `channels[].sessions` and site `sessions` as GA reports them (the
+   page must match GA), and say what was removed in a standout, for example "1,021 Direct visits
+   on Oct 16 were OpenSEO's full audit, not people." Add one "fyi" action per audit
+   (`<site>:audit-traffic:<auditId>`): title "OpenSEO's full audit added about N fake Direct
+   visits", why = date and dayDirect vs baseline, fix = "Nothing to do. Read Direct without that
+   day." If the day call fails, add it to `errors` and use the raw numbers.
+
 How to read the tool output (learned on the first run, 2026-10-05):
 - Site totals: no call returns one. Sum `comparison.rows[].metrics.sessions.{current,previous}`
   from the channel_group call (null = 0). Site engagement rate = sum(engagedSessions) / sum(sessions)
@@ -101,6 +118,13 @@ How to read the tool output (learned on the first run, 2026-10-05):
 - measurement_health `keyEvents[].createTime` tells you when a key event was set up.
 - Links: GA and opportunity tools return no URL. Use the project `url` from list_projects;
   for audit actions use `meta.url` from list_site_audits.
+- Full audits fake Direct visits (found 2026-10-21): a renderJavaScript audit opens every page in
+  a real browser, so the site's GA tag fires once per page rendered. Each one lands as a Direct,
+  desktop, 0-engagement session, mostly from the United States. Wooden Nutmeg's 1,000-page full
+  audit on 2026-10-16 showed up as 1,021 Direct sessions that day (about 28 on a normal day).
+  Plain audits do not run JS and do not fire the tag. list_site_audits has no renderJavaScript
+  field; this pipeline always pairs it with runLighthouse, so read `ranLighthouse: true` as
+  "rendered JS".
 
 ## Step 2 - triage (the "Needs you" list)
 
@@ -123,8 +147,17 @@ priority "soon" (worth doing this week):
   Search Console and rewrite the title and meta description to match the top query; name the path.
 - bot: a channel whose sessions jumped 40%+ with engagement rate under 5% (Direct is the usual
   one), or that sits under 5% engagement with 100+ sessions in both weeks (ongoing bot share).
-  Call it "likely bot or spam traffic", never real growth, and leave it out of the headline growth
-  story. Fix = check source/medium and hostnames in GA4; add a data filter only if it keeps happening.
+  Test Direct on the numbers with audit visits removed (Step 1.5); if the spike is gone, it is
+  not a bot action, only the audit fyi. Engagement rate for the test = engaged Direct sessions /
+  adjusted Direct sessions. Call what is left "likely bot or spam traffic", never real growth,
+  and leave it out of the headline growth story. Fix = these GA4 steps, in plain words: "In GA4
+  open Reports > Acquisition > Traffic acquisition. Click Add filter, pick Session default
+  channel group, exactly matches, Direct, Apply. Click the + next to the first column header and
+  add Country, then try City, Device category and Hostname. Bots show up as one place, all
+  desktop, near 0% engagement." Do not tell the owner to check source/medium (Direct is always
+  "(direct) / (none)") or to add a GA4 data filter: GA4 data filters only drop internal traffic
+  by listed IP address and developer traffic, so they cannot match bots by country or hostname.
+  If the same source keeps coming back, the lasting fix is to block it at the host or CDN.
 - tracking-hygiene: top pages include a host that is not the live site (localhost,
   deploy-preview-*, *.netlify.app, *.pages.dev). GA is counting dev or preview visits.
   Fix = only load the GA tag on the production hostname (gate the `gtag('config', …)` call on
