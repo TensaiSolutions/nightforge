@@ -14,7 +14,9 @@ which one. Do not guess.
 
 Read-only toward every account: never change anything in OpenSEO, GA4 or Search Console, and never
 call an OpenSEO tool that spends credits (no get_serp_results, rank tracker runs, backlinks, keyword
-research). One exception: the site audits in Step 1.4 (run_site_audit, plus whoami to watch credits).
+research). Exceptions: the site audits in Step 1.4 (run_site_audit, plus whoami to watch credits),
+and the GitHub issues in Step 2b, which open, comment on and reopen issues only in the repos the
+card's **Repos** field lists.
 
 This skill's folder (the one holding this file, `build.py` and `template.html`) is the **skill
 folder**. The card's **Data folder** holds this run's files: `report.json`, `history.json` and
@@ -172,6 +174,55 @@ from the tool's `meta.url`). Do not invent problems to fill the list. An empty l
 Do not raise tagging for any site in the card's **Parked sites**. They may still appear in
 `notConnected`, with "parked": true.
 
+## Step 2b - file audit findings as GitHub issues
+
+Turn what the audits found into GitHub issues the owner can work from, one issue per problem
+type per site. Only sites in the card's **Repos** field get issues; skip the rest silently. A
+site with no repo listed, or a repo you cannot reach, is not an error unless a `gh` call fails.
+
+When to file. Work from the site's newest completed audit (list_site_audits). File or update
+issues for a site only when that audit's `completedAt` is after `history.json` `lastRun`, or when
+the repo has no issue with the card's **Issue label** yet (a one-time backfill). Otherwise the
+site's issues are already current; leave them alone.
+
+1. Label. Once per repo per run: `gh label create "<Issue label>" -R <repo> --color 0E8A16
+   --description "Found by the GA traffic report's site audits" --force` (creates or updates it).
+2. SEO findings. get_audit_issues for that audit, once per severity in the card's
+   **Issue severities**, limit 1000. Group by `issueType`. One issue per type:
+   - title: `[site audit] <summary title>` (for example `[site audit] Thin content`).
+   - body: what it is and why it matters in one or two plain sentences; the count and audit date;
+     the first `howToFix`; up to 20 affected URLs as a checklist (`- [ ] <url>`), plus "and N more"
+     with the audit link (`meta.url`); and a last line `<!-- ga-traffic-report:<issueType> -->`.
+3. Performance. OpenSEO does not return Lighthouse scores, so read them from the PageSpeed
+   Insights API, and only for sites whose newest completed audit has `ranLighthouse: true`. Test
+   the site's home page plus its top 2 pages by views from Step 1.2 (production host only), mobile:
+   `curl -s --max-time 120 -H "X-Goog-Api-Key: <key>" "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=<url-encoded>&strategy=mobile&category=performance"`.
+   The key is `api_key` in `~/.config/claude-seo/google-api.json`. Send it only in that header:
+   never in the URL, a file, the report or an issue. Without the key the shared quota is usually
+   used up (429). A page fails when performance score < 0.9, or LCP > 2.5 s, CLS > 0.1 or TBT >
+   200 ms. If any page fails, one issue per site, title `[site audit] Mobile performance`:
+   a table of page, score, LCP, CLS and TBT; then the audits on failing pages with score under 0.9
+   and their `displayValue`, worst first, at most 10; and the marker
+   `<!-- ga-traffic-report:performance -->`. If the API errors, add it to `errors` and skip.
+4. Match before you write. List the repo's issues once:
+   `gh issue list -R <repo> --label "<Issue label>" --state all --limit 200 --json number,title,state,body`.
+   Match on the marker line, then on the exact title.
+   - No match: open it with `gh issue create -R <repo> --label "<Issue label>"`, title and body
+     from a temp file (`--body-file`). At most **Max new issues per run** across all sites, worst
+     first (critical, then performance, then warning, then info; bigger counts first). The rest
+     wait for the next run.
+   - Open match: comment only when the count or the failing pages changed: "Audit <date>: N pages
+     (was M)", plus any new URLs. No comment if nothing changed.
+   - Closed match that came back: reopen it (`gh issue reopen`) with a comment saying which audit
+     found it again.
+   - An open issue whose type this audit no longer finds: comment once "Not found in the <date>
+     audit. Close this if the fix is live." Do not close it yourself.
+5. Report it. One "fyi" action per site where anything was written,
+   id `<site>:github-issues:audit`, title "Opened N and updated M GitHub issues from the <date>
+   audit", why = the issue titles, fix = "Work through them in GitHub.", link =
+   `https://github.com/<repo>/issues?q=label%3A<Issue label>`. Any failed `gh` call goes in
+   `errors` with its exact message; keep going.
+
 ## Step 3 - write report.json
 
 Write `report.json` in the **Data folder**, UTF-8, exactly this shape ([current, previous] pairs):
@@ -222,9 +273,10 @@ worth it in under 12 words.
 Do not edit template.html or build.py unless the build is actually broken; if you do, say what
 and why, and edit them in a nightforge worktree with a PR, never the installed copy.
 
-## Step 5 - reply in 4 lines or fewer
+## Step 5 - reply in 5 lines or fewer
 
 - Total sessions across sites, change vs last week.
 - Action counts (fix now / this week), naming every "fix now" item.
+- GitHub issues opened and updated, per repo (skip the line if none).
 - Anything that failed, named.
 - The artifact link.

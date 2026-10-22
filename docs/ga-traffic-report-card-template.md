@@ -42,6 +42,10 @@ file does not exist, stop and report exactly that — do not improvise a report.
 | **Full audit every** | **<n>** days (JS rendering + Lighthouse, page limit sized to the site, up to 1,000; costs credits) |
 | **Max audits per run** | **<n>** |
 | **Credit floor** | **<n>** — below this, no full audits start |
+| **Repos** | `<site name>` → `<owner/repo>`, one per line — sites that get GitHub issues from audit findings |
+| **Issue label** | `site-audit` |
+| **Issue severities** | `critical`, `warning` (add `info` for everything) |
+| **Max new issues per run** | **<n>** |
 ```
 
 ## Fields
@@ -58,3 +62,11 @@ file does not exist, stop and report exactly that — do not improvise a report.
   the whole limit until the audit ends.
 - **Credit floor** — checked with `whoami` before any full audit starts. Each run reports the
   credits it used.
+- **Repos** — Step 2b opens one GitHub issue per problem type per site, from the newest audit, in
+  the repo listed for that site. Leave a site out to get no issues for it. Mobile performance
+  issues need a Google API key at `~/.config/claude-seo/google-api.json` (`api_key`), because
+  OpenSEO does not return Lighthouse scores.
+- **Issue label** — how the run finds its own issues again. Changing it makes the next run
+  backfill every listed repo under the new label.
+- **Max new issues per run** — caps new issues only. Comments and reopens on existing issues are
+  not capped.
